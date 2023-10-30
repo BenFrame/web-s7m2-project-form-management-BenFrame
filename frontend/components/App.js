@@ -5,6 +5,11 @@ import React, { useState, useEffect } from 'react'
 
 let id = 0
 const getId = () => ++id
+const initialFormValue = {
+  fname: '', 
+  lname: '', 
+  bio: '', 
+}
 
 let teamMembers = [
   {
@@ -22,6 +27,7 @@ I enjoy bringing creativity and aesthetics to the digital world."
 export default function App() {
   const [members, setMembers] = useState(teamMembers)
   const [editing, setEditing] = useState(null)
+  const [input, setInput] = useState(initialFormValue)
   // ✨ Create a third state to track the values of the inputs
 
   useEffect(() => {
@@ -30,9 +36,23 @@ export default function App() {
     // with the data belonging to the member with id 2.
     // On the other hand, if the `editing` state changes back to null
     // then we need to reset the form back to empty values
+    if (editing == null) {
+      setInput(initialFormValue)
+    } else {
+      const {fname, lname, bio } = members.find(mem => mem.id == editing)
+      setInput({fname, lname, bio})
+    }
   }, [editing])
 
+  useEffect( () => {
+    console.log( input );
+  })
+
   const onChange = evt => {
+    const {id, value} = evt.target
+    // const newInput = {...input};
+    // newInput[id] = value;
+    setInput( previousInputs => ({ ...previousInputs, [id]: value }) )
     // ✨ This is the change handler for your text inputs and your textarea.
     // You can check `evt.target.id` to know which input changed
     // and then you can use `evt.target.value` to update the state of the form
@@ -41,16 +61,41 @@ export default function App() {
     // ✨ Put this function inside a click handler for the <button>Edit</button>.
     // It should change the value of `editing` state to be the id of the member
     // whose Edit button was clicked
+      setEditing(id)
   }
   const submitNewMember = () => {
+      setMembers(
+        [ ...members, 
+          { id: getId(), 
+            fname: input.fname, 
+            lname: input.lname, 
+            bio: input.bio,
+          }
+        ]
+        )
+        
     // This takes the values of the form and constructs a new member object,
     // which is then concatenated at the end of the `members` state
   }
   const editExistingMember = () => {
     // ✨ This takes the values of the form and replaces the data of the
     // member in the `members` state whose id matches the `editing` state
+    setMembers(prevMembers => prevMembers.map(mem => {
+      if (mem.id == editing) {
+        return {...mem, ...input}
+      }
+      return mem
+    }))
+    setEditing(null)
   }
   const onSubmit = evt => {
+    evt.preventDefault()
+    if (editing) {
+      editExistingMember()
+    } else {
+      submitNewMember()
+    }
+    setInput(initialFormValue)
     // ✨ This is the submit handler for your form element.
     // It will call either `submitNewMember` or `editExistingMember`
     // depending on whether the `editing` state is null or has an id in it.
@@ -69,28 +114,28 @@ export default function App() {
                   <h4>{mem.fname} {mem.lname}</h4>
                   <p>{mem.bio}</p>
                 </div>
-                <button>Edit</button>
+                <button onClick={()=>edit(mem.id)}>Edit</button>
               </div>
             ))
           }
         </div>
       </div>
-      <div id="membersForm">
+      <div id="membersForm" onSubmit={onSubmit}>
         <h2>{editing ? 'Edit' : 'Add'} a Team Member</h2>
         <form>
           <div>
             <label htmlFor="fname">First Name </label>
-            <input id="fname" type="text" placeholder="Type First Name" />
+            <input value={input.fname} onChange={onChange} id="fname" type="text" placeholder="Type First Name" />
           </div>
 
           <div>
             <label htmlFor="lname">Last Name </label>
-            <input id="lname" type="text" placeholder="Type Last Name" />
+            <input value={input.lname} onChange={onChange} id="lname" type="text" placeholder="Type Last Name" />
           </div>
 
           <div>
             <label htmlFor="bio">Bio </label>
-            <textarea id="bio" placeholder="Type Bio" />
+            <textarea value={input.bio} onChange={onChange} id="bio" placeholder="Type Bio" />
           </div>
 
           <div>
